@@ -1,0 +1,12 @@
+#!/bin/bash
+
+ROOT="/mnt/usb14/Camera"
+YEAR=`date +'%Y'`
+MONTH=`date +'%m'`
+DAY=`date +'%d'`
+FULL=`date +'%Y%m%d-%H%M%S-%s'`
+
+mkdir -p $ROOT/$YEAR/$MONTH/$DAY 2>/dev/null
+
+# 10 minute stream
+ffmpeg -i "rtsp://admin:password@10.10.10.10:554/live/profile.0" -t 600 -c:v copy -c:a copy "$ROOT/$YEAR/$MONTH/$DAY/$FULL.mp4"
