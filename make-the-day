@@ -1,0 +1,53 @@
+#!/bin/bash
+
+ROOT="/mnt/usb14/Camera"
+
+if [ "$1" == "" ]; then
+  YEAR=`date -d'yesterday' +'%Y'`
+  MONTH=`date -d'yesterday' +'%m'`
+  DAY=`date -d'yesterday' +'%d'`
+else
+  if [ "$2" == "" ]; then
+    echo "need 2nd parameter as month"
+    exit;
+  fi
+  if [ "$3" == "" ]; then
+    echo "need 3rd parameter as day"
+    exit;
+  fi
+    YEAR=$1
+    MONTH=$2
+    DAY=$3
+fi
+
+if [ ! -d $ROOT/$YEAR/$MONTH/$DAY ]; then
+  echo "folder $ROOT/$YEAR/$MONTH/$DAY does not exist"
+  exit
+fi
+
+# Have to test files
+for F in $ROOT/$YEAR/$MONTH/$DAY/*.mp4; do
+    ffprobe -i $F 2> /dev/null
+    if [ $? -ne 0 ]; then
+        mv $F "$F".bad
+    fi
+done
+
+find $ROOT/$YEAR/$MONTH/$DAY -type f -name '*.mp4' | sort > files
+for LINE in `cat files`; do
+  echo "file '$LINE'" >> concat.txt
+done;
+rm files
+
+if [ ! -e concat.txt ]; then
+  echo "concat file not made"
+  exit
+fi
+
+# make our one file for the day
+ffmpeg -f concat -safe 0 -i concat.txt -c copy $ROOT/$YEAR/$MONTH/"$YEAR""$MONTH""$DAY".mp4
+if [ $? -eq 0 ]; then
+  mv $ROOT/$YEAR/$MONTH/$DAY $ROOT/$YEAR/$MONTH/"$DAY".done
+fi
+
+rm concat.txt
